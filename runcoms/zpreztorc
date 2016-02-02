@@ -28,15 +28,16 @@ zstyle ':prezto:load' pmodule \
   'terminal' \
   'editor' \
   'history' \
-  'history-substring-search' \
   'directory' \
   'spectrum' \
   'utility' \
   'completion' \
+  'fasd' \
   'git' \
   'ruby' \
   'rails' \
   'syntax-highlighting' \
+  'history-substring-search' \
   'prompt' \
 
 
@@ -121,15 +122,16 @@ zstyle ':prezto:module:prompt' theme 'sorin'
 #
 # Syntax Highlighting
 #
+zstyle ':prezto:module:syntax-highlighting' color 'yes'
 
 # Set syntax highlighters.
 # By default, only the main highlighter is enabled.
-# zstyle ':prezto:module:syntax-highlighting' highlighters \
-#   'main' \
-#   'brackets' \
-#   'pattern' \
-#   'cursor' \
-#   'root'
+zstyle ':prezto:module:syntax-highlighting' highlighters \
+  'main' \
+  'brackets' \
+  'pattern' \
+  'cursor' \
+  'root'
 #
 # Set syntax highlighting styles.
 # zstyle ':prezto:module:syntax-highlighting' styles \
