@@ -51,3 +51,5 @@ fi
 # Emacs seems to need a trailing : character on the path otherwise
 # it ignores the value of $PATH and just uses the standard system path.
 # export PATH="$PATH:"
+
+# export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
