@@ -1,180 +1,171 @@
 # -*- shell-script -*-
 
-# My personal zsh theme based on agnoster. The RVM info was lifted
+# My personal zsh theme based on paradox. The RVM info was lifted
 # from the powerline zsh theme.
+#
+# * Replaced time on RHS with RVM status
+#
+# A two-line, Powerline-inspired theme that displays contextual information.
+#
+# This theme requires a patched Powerline font, get them from
+# https://github.com/Lokaltog/powerline-fonts.
+#
+# Authors:
+#   Isaac Wolkerstorfer <i@agnoster.net>
+#   Jeff Sandberg <paradox460@gmail.com>
+#   Sorin Ionescu <sorin.ionescu@gmail.com>
+#
+# Screenshots:
+#   http://i.imgur.com/0XIWX.png
+#
 
-# vim:ft=zsh ts=2 sw=2 sts=2
-#
-# colbell's Theme - https://gist.github.com/3712874
-# A Powerline-inspired theme for ZSH
-#
-# # README
-#
-# In order for this theme to render correctly, you will need a
-# [Powerline-patched font](https://gist.github.com/1595572).
-#
-# In addition, I recommend the
-# [Solarized theme](https://github.com/altercation/solarized/) and, if you're
-# using it on Mac OS X, [iTerm 2](http://www.iterm2.com/) over Terminal.app -
-# it has significantly better color fidelity.
-#
-# # Goals
-#
-# The aim of this theme is to only show you *relevant* information. Like most
-# prompts, it will only show git information when in a git working directory.
-# However, it goes a step further: everything from the current user and
-# hostname to whether the last call exited with an error to whether background
-# jobs are running in this shell will all be displayed automatically when
-# appropriate.
+# Load dependencies.
+pmodload 'helper'
 
-### Segment drawing
-# A few utility functions to make it easy and re-usable to draw segmented prompts
-
-CURRENT_BG='NONE'
-PRIMARY_FG=black
-
-# Characters
-SEGMENT_SEPARATOR="\ue0b0"
-PLUSMINUS="\u00b1"
-BRANCH="\ue0a0"
-DETACHED="\u27a6"
-CROSS="\u2718"
-LIGHTNING="\u26a1"
-GEAR="\u2699"
+# Define variables.
+_prompt_colbell_current_bg='NONE'
+_prompt_colbell_segment_separator=''
+_prompt_colbell_start_time=$SECONDS
 
 function rvm_info_for_prompt {
-    if [[ -d ~/.rvm/ ]]; then
-        local ruby_version=$(~/.rvm/bin/rvm-prompt)
-        if [ -n "$ruby_version" ]; then
-            echo "$ruby_version"
-        fi
-    else
-        echo ""
+  if [[ -d ~/.rvm/ ]]; then
+    local ruby_version=$(~/.rvm/bin/rvm-prompt)
+    if [ -n "$ruby_version" ]; then
+      echo "$ruby_version"
     fi
+  else
+    echo ""
+  fi
 }
 
-# Begin a segment
-# Takes two arguments, background and foreground. Both can be omitted,
-# rendering default background/foreground.
-prompt_segment() {
+function prompt_colbell_start_segment {
   local bg fg
-  [[ -n $1 ]] && bg="%K{$1}" || bg="%k"
-  [[ -n $2 ]] && fg="%F{$2}" || fg="%f"
-  if [[ $CURRENT_BG != 'NONE' && $1 != $CURRENT_BG ]]; then
-    print -n "%{$bg%F{$CURRENT_BG}%}$SEGMENT_SEPARATOR%{$fg%}"
+  [[ -n "$1" ]] && bg="%K{$1}" || bg="%k"
+  [[ -n "$2" ]] && fg="%F{$2}" || fg="%f"
+  if [[ "$_prompt_colbell_current_bg" != 'NONE' && "$1" != "$_prompt_colbell_current_bg" ]]; then
+    print -n " $bg%F{$_prompt_colbell_current_bg}$_prompt_colbell_segment_separator$fg "
   else
-    print -n "%{$bg%}%{$fg%}"
+    print -n "$bg$fg "
   fi
-  CURRENT_BG=$1
-  [[ -n $3 ]] && print -n $3
+  _prompt_colbell_current_bg="$1"
+  [[ -n "$3" ]] && print -n "$3"
 }
 
-# End the prompt, closing any open segments
-prompt_end() {
-  if [[ -n $CURRENT_BG ]]; then
-    print -n "%{%k%F{$CURRENT_BG}%}$SEGMENT_SEPARATOR"
+function prompt_colbell_end_segment {
+  if [[ -n "$_prompt_colbell_current_bg" ]]; then
+    print -n " %k%F{$_prompt_colbell_current_bg}$_prompt_colbell_segment_separator"
   else
-    print -n "%{%k%}"
+    print -n "%k"
   fi
-  print -n "%{%f%}"
-  CURRENT_BG=''
+  print -n "%f"
+  _prompt_colbell_current_bg=''
 }
 
-### Prompt components
-# Each component will draw itself, and hide itself if no information needs to be shown
+function prompt_colbell_build_prompt {
+  prompt_colbell_start_segment black default '%(?::%F{red}✘ )%(!:%F{yellow}⚡ :)%(1j:%F{cyan}⚙ :)%F{green}%n%F{red}@%F{green}%m%f'
+  prompt_colbell_start_segment blue black '$_prompt_colbell_pwd'
 
-# Context: user@hostname (who am I and where am I)
-prompt_context() {
-  local user=`whoami`
-
-  if [[ "$user" != "$DEFAULT_USER" || -n "$SSH_CONNECTION" ]]; then
-    prompt_segment $PRIMARY_FG default " %(!.%{%F{yellow}%}.)$user@%m "
+  if [[ -n "$git_info" ]]; then
+    prompt_colbell_start_segment green black '${(e)git_info[ref]}${(e)git_info[status]}'
   fi
+
+  prompt_colbell_end_segment
 }
 
-# Git: branch/detached head, dirty status
-prompt_git() {
-  local color ref
-  is_dirty() {
-    test -n "$(git status --porcelain --ignore-submodules)"
-  }
-  ref="$vcs_info_msg_0_"
-  if [[ -n "$ref" ]]; then
-    if is_dirty; then
-      color=yellow
-      ref="${ref} $PLUSMINUS"
-    else
-      color=green
-      ref="${ref} "
-    fi
-    if [[ "${ref/.../}" == "$ref" ]]; then
-      ref="$BRANCH $ref"
-    else
-      ref="$DETACHED ${ref/.../}"
-    fi
-    prompt_segment $color $PRIMARY_FG
-    print -Pn " $ref"
+function prompt_colbell_pwd {
+  local pwd="${PWD/#$HOME/~}"
+
+  if [[ "$pwd" == (#m)[/~] ]]; then
+    _prompt_colbell_pwd="$MATCH"
+    unset MATCH
+  else
+    _prompt_colbell_pwd="${${${${(@j:/:M)${(@s:/:)pwd}##.#?}:h}%/}//\%/%%}/${${pwd:t}//\%/%%}"
   fi
 }
 
-prompt_rvm() {
-  print $(rvm_info_for_prompt )
+function prompt_colbell_print_elapsed_time {
+  local end_time=$(( SECONDS - _prompt_colbell_start_time ))
+  local hours minutes seconds remainder
+
+  if (( end_time >= 3600 )); then
+    hours=$(( end_time / 3600 ))
+    remainder=$(( end_time % 3600 ))
+    minutes=$(( remainder / 60 ))
+    seconds=$(( remainder % 60 ))
+    print -P "%B%F{red}>>> elapsed time ${hours}h${minutes}m${seconds}s%b"
+  elif (( end_time >= 60 )); then
+    minutes=$(( end_time / 60 ))
+    seconds=$(( end_time % 60 ))
+    print -P "%B%F{yellow}>>> elapsed time ${minutes}m${seconds}s%b"
+  elif (( end_time > 10 )); then
+    print -P "%B%F{green}>>> elapsed time ${end_time}s%b"
+  fi
 }
 
-# Dir: current working directory
-prompt_dir() {
-  prompt_segment blue $PRIMARY_FG ' %~ '
+function prompt_colbell_precmd {
+  setopt LOCAL_OPTIONS
+  unsetopt XTRACE KSH_ARRAYS
+
+  # Format PWD.
+  prompt_colbell_pwd
+
+  # Get Git repository information.
+  if (( $+functions[git-info] )); then
+    git-info
+  fi
+
+  # Calculate and print the elapsed time.
+  prompt_colbell_print_elapsed_time
 }
 
-# Status:
-# - was there an error
-# - am I root
-# - are there background jobs?
-prompt_status() {
-  local symbols
-  symbols=()
-  [[ $RETVAL -ne 0 ]] && symbols+="%{%F{red}%}$CROSS"
-  [[ $UID -eq 0 ]] && symbols+="%{%F{yellow}%}$LIGHTNING"
-  [[ $(jobs -l | wc -l) -gt 0 ]] && symbols+="%{%F{cyan}%}$GEAR"
-
-  [[ -n "$symbols" ]] && prompt_segment $PRIMARY_FG default " $symbols "
+function prompt_colbell_preexec {
+  _prompt_colbell_start_time="$SECONDS"
 }
 
-## Main prompt
-prompt_colbell_main() {
-  RETVAL=$?
-  CURRENT_BG='NONE'
-  prompt_status
-  prompt_context
-  prompt_dir
-  prompt_git
-  prompt_end
-}
+function prompt_colbell_setup {
+  setopt LOCAL_OPTIONS
+  unsetopt XTRACE KSH_ARRAYS
+  prompt_opts=(cr percent subst)
 
-## RHS prompt
-prompt_colbell_rhs() {
-  prompt_segment
-  prompt_rvm
-}
-
-prompt_colbell_precmd() {
-  vcs_info
-  PROMPT='%{%f%b%k%}$(prompt_colbell_main) '
-  RPROMPT=' $(prompt_colbell_rhs) '
-}
-
-prompt_colbell_setup() {
+  # Load required functions.
   autoload -Uz add-zsh-hook
-  autoload -Uz vcs_info
 
-  prompt_opts=(cr subst percent)
-
+  # Add hook for calling git-info before each command.
+  add-zsh-hook preexec prompt_colbell_preexec
   add-zsh-hook precmd prompt_colbell_precmd
 
-  zstyle ':vcs_info:*' enable git
-  zstyle ':vcs_info:*' check-for-changes false
-  zstyle ':vcs_info:git*' formats '%b'
-  zstyle ':vcs_info:git*' actionformats '%b (%a)'
+  # Set editor-info parameters.
+  zstyle ':prezto:module:editor:info:completing' format '%B%F{red}...%f%b'
+  zstyle ':prezto:module:editor:info:keymap:primary' format '%B%F{blue}❯%f%b'
+  zstyle ':prezto:module:editor:info:keymap:primary:overwrite' format '%F{red}♺%f'
+  zstyle ':prezto:module:editor:info:keymap:alternate' format '%B%F{red}❮%f%b'
+
+  # Set git-info parameters.
+  zstyle ':prezto:module:git:info' verbose 'yes'
+  zstyle ':prezto:module:git:info:action' format ' ⁝ %s'
+  zstyle ':prezto:module:git:info:added' format ' ✚'
+  zstyle ':prezto:module:git:info:ahead' format ' ⬆'
+  zstyle ':prezto:module:git:info:behind' format ' ⬇'
+  zstyle ':prezto:module:git:info:branch' format ' %b'
+  zstyle ':prezto:module:git:info:commit' format '➦ %.7c'
+  zstyle ':prezto:module:git:info:deleted' format ' ✖'
+  zstyle ':prezto:module:git:info:dirty' format ' ⁝'
+  zstyle ':prezto:module:git:info:modified' format ' ✱'
+  zstyle ':prezto:module:git:info:position' format '%p'
+  zstyle ':prezto:module:git:info:renamed' format ' ➙'
+  zstyle ':prezto:module:git:info:stashed' format ' S'
+  zstyle ':prezto:module:git:info:unmerged' format ' ═'
+  zstyle ':prezto:module:git:info:untracked' format ' ?'
+  zstyle ':prezto:module:git:info:keys' format \
+    'ref' '$(coalesce "%b" "%p" "%c")' \
+    'status' '%s%D%A%B%S%a%d%m%r%U%u'
+
+  # Define prompts.
+  PROMPT='
+${(e)$(prompt_colbell_build_prompt)}
+ ${editor_info[keymap]} '
+  RPROMPT='%F{red}[%F{green}%D{$(rvm_info_for_prompt )}%F{red}]%f'
+  SPROMPT='zsh: correct %F{red}%R%f to %F{green}%r%f [nyae]? '
 }
 
 prompt_colbell_setup "$@"
