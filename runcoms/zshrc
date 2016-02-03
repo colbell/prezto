@@ -49,6 +49,13 @@ export GTK_IM_MODULE=ibus
 export QT_IM_MODULE=ibus
 export CLUTTER_IM_MODULE=ibus
 
+if [ -f "$HOME/.zsh-aliases" ]; then
+  source $HOME/.zsh-aliases
+fi
+
+if [ -f "$HOME/.zsh-funcs" ]; then
+  source $HOME/.zsh-funcs
+fi
 
 if [[ -f "$HOME/.aws_keys" ]]; then
   source "$HOME/.aws_keys";
