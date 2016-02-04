@@ -61,6 +61,8 @@ if [[ -f "$HOME/.aws_keys" ]]; then
   source "$HOME/.aws_keys";
 fi
 
+export DEFAULT_USER=colbell
+
 # Emacs seems to need a trailing : character on the path otherwise
 # it ignores the value of $PATH and just uses the standard system path.
 # export PATH="$PATH:"

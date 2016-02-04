@@ -79,7 +79,8 @@ function prompt_colbell_pwd {
     _prompt_colbell_pwd="$MATCH"
     unset MATCH
   else
-    _prompt_colbell_pwd="${${${${(@j:/:M)${(@s:/:)pwd}##.#?}:h}%/}//\%/%%}/${${pwd:t}//\%/%%}"
+    #_prompt_colbell_pwd="${${${${(@j:/:M)${(@s:/:)pwd}##.#?}:h}%/}//\%/%%}/${${pwd:t}//\%/%%}"
+    _prompt_colbell_pwd=$pwd
   fi
 }
 
