@@ -10,8 +10,8 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
 
-export LANG='en_AU.utf8'
-export LC_CTYPE='en_AU.UTF-8'
+#export LANG='en_AU.utf8'
+#export LC_CTYPE='en_AU.UTF-8'
 #export LC_CTYPE=C
 
 export MAIL=/var/mail/$USER
@@ -29,11 +29,11 @@ export ALTERNATE_EDITOR=emacs
 
 export MANWIDTH=96
 
-export TERM=xterm-256color
-[ -n "$DISPLAY" ] && export TERM=xterm-256color
-[ -n "$TMUX" ] && export TERM=screen-256color
-[ -n "$BYOBU_BACKEND" ] && export TERM=screen-256color
-[ -n "$INSIDE_EMACS" ] && export TERM=eterm-color
+# export TERM=xterm-256color
+# [ -n "$DISPLAY" ] && export TERM=xterm-256color
+# [ -n "$TMUX" ] && export TERM=screen-256color
+# [ -n "$BYOBU_BACKEND" ] && export TERM=screen-256color
+# [ -n "$INSIDE_EMACS" ] && export TERM=eterm-color
 
 autoload -U colors
 colors
